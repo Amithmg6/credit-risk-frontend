@@ -4,92 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Credit Risk Predictor</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        input {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            margin-top: 20px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #prediction_result {
-            margin-top: 20px;
-            font-size: 18px;
-            text-align: center;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>Credit Risk Predictor</h1>
-        <p>Enter applicant details to assess credit risk.</p>
+        <div class="header">
+            <img src="logo.png" alt="Logo" class="logo">
+            <h1>Credit Risk Predictor</h1>
+            <p>Empowering financial decisions with intelligent risk assessment.</p>
+        </div>
         <form id="loan-form">
-            <label for="credit_score">Credit Score:</label>
-            <input type="number" id="credit_score" required>
-
-            <label for="annual_income">Annual Income ($):</label>
-            <input type="number" id="annual_income" required>
-
-            <label for="loan_amount">Loan Amount ($):</label>
-            <input type="number" id="loan_amount" required>
-
-            <label for="loan_term_years">Loan Term (years):</label>
-            <input type="number" id="loan_term_years" required>
-
-            <button type="submit">Assess Risk</button>
+            <div class="form-group">
+                <label for="credit_score">Credit Score</label>
+                <input type="number" id="credit_score" required placeholder="e.g., 750">
+            </div>
+            <div class="form-group">
+                <label for="annual_income">Annual Income (INR)</label>
+                <input type="number" id="annual_income" required placeholder="e.g., 850000">
+            </div>
+            <div class="form-group">
+                <label for="loan_amount">Loan Amount (INR)</label>
+                <input type="number" id="loan_amount" required placeholder="e.g., 500000">
+            </div>
+            <div class="form-group">
+                <label for="loan_term_years">Loan Term (years)</label>
+                <input type="number" id="loan_term_years" required placeholder="e.g., 5">
+            </div>
+            <button type="submit">
+                Assess Risk 
+                <span class="icon">➡️</span>
+            </button>
         </form>
-        <div id="prediction_result"></div>
+        <div id="prediction_result" class="result"></div>
     </div>
-
+    
     <script>
         // TODO: Replace with your actual Render API URL
         const BACKEND_URL = "https://your-render-app-name.onrender.com";
 
         document.getElementById('loan-form').addEventListener('submit', async function(event) {
             event.preventDefault();
+            const form = document.getElementById('loan-form');
+            const button = form.querySelector('button[type="submit"]');
 
             const credit_score = document.getElementById('credit_score').value;
             const annual_income = document.getElementById('annual_income').value;
@@ -104,7 +61,9 @@
             };
 
             const resultDiv = document.getElementById('prediction_result');
-            resultDiv.innerText = "Assessing risk...";
+            resultDiv.innerHTML = '<div class="spinner"></div><p>Assessing risk...</p>';
+            resultDiv.classList.add('loading');
+            button.disabled = true;
 
             try {
                 const response = await fetch(`${BACKEND_URL}/predict`, {
@@ -120,11 +79,32 @@
                 }
 
                 const result = await response.json();
-                resultDiv.innerText = `Prediction: ${result.prediction}`;
+                const predictionText = result.prediction.toLowerCase();
+                
+                let resultMessage = '';
+                let resultClass = '';
+
+                if (predictionText.includes('low')) {
+                    resultMessage = `✅ Low Risk: The applicant is a good candidate for a loan.`;
+                    resultClass = 'low-risk';
+                } else if (predictionText.includes('high')) {
+                    resultMessage = `⚠️ High Risk: The applicant poses a significant credit risk.`;
+                    resultClass = 'high-risk';
+                } else {
+                    resultMessage = `Prediction: ${result.prediction}`;
+                    resultClass = '';
+                }
+
+                resultDiv.innerHTML = `<p>${resultMessage}</p>`;
+                resultDiv.className = `result ${resultClass}`;
 
             } catch (error) {
                 console.error('Error:', error);
-                resultDiv.innerText = 'Error assessing risk. Please try again.';
+                resultDiv.innerHTML = '<p class="error">❌ Error assessing risk. Please try again.</p>';
+                resultDiv.className = 'result error-state';
+            } finally {
+                resultDiv.classList.remove('loading');
+                button.disabled = false;
             }
         });
     </script>
